@@ -2,8 +2,8 @@
  * $Id$
  */
 
-#ifndef __HTSMUX_DRIVER_H__
-#define __HTSMUX_DRIVER_H__
+#ifndef __HTSMUX_DRIVER_NXC__
+#define __HTSMUX_DRIVER_NXC__
 
 /**
  * HTSMUX-driver.nxc provides an API for the HiTechnic Sensor MUX.  This program
