@@ -33,7 +33,7 @@ void MotorDriverSetMotorA(const byte &port, const byte &addr, const byte &arg1, 
     I2CWrite(port, 0, cmdbuf);
 }
 
-void MotorDriverSetMotorA(const byte &port, const byte &addr, const byte &arg1, const byte &arg2)
+void MotorDriverSetMotorB(const byte &port, const byte &addr, const byte &arg1, const byte &arg2)
 {
     byte cmdbuf[];
     ArrayBuild(cmdbuf, addr, MOTORDRIVERSETB, arg1, arg2);
