@@ -1,0 +1,63 @@
+#include "libAanvaller.nxc"
+#include "Behaviour.nxc"
+
+task main()
+{
+    char interface = 0, running = false;
+    Init();
+    while(true)
+    {
+        if(!running)
+        {
+            interface = interface + ButtonCount(BTNRIGHT, true) - ButtonCount(BTNLEFT, true);
+            NumOut(0, LCD_LINE1, interface, DRAW_OPT_CLEAR_EOL);
+            switch(interface)
+            {
+                case -1:
+                    interface = 3;
+                    break;
+                case 0:
+                    TextOut(6, LCD_LINE1, ": Boundery");
+                    break;
+                case 1:
+                    TextOut(6, LCD_LINE1, ": Target");
+                    break;
+                case 2:
+                    TextOut(6, LCD_LINE1, ": Align");
+                    break;
+                case 3:
+                    TextOut(6, LCD_LINE1, ": Search");
+                    break;
+                case 4:
+                    interface = 0;
+                    break;
+            }
+        }
+        if(running)
+        {
+            UpdateSensorValues();
+            switch(interface)
+            {
+                case 0:
+                    BorderControl();
+                    break;
+                case 1:
+                    if(possession) Target();
+                    else Off(OUT_AC);
+                    break;
+                case 2:
+                    Align();
+                    break;
+                case 3:
+                    Search();
+                    break;
+            }
+        }
+        if(ButtonCount(BTNCENTER, true))
+        {
+            Off(OUT_ABC);
+            ClearScreen();
+            running = !running;
+        }
+    }
+}

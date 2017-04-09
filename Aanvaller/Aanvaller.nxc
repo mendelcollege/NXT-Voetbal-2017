@@ -1,0 +1,26 @@
+#include "libAanvaller.nxc"
+
+task main()
+{
+    Init();
+    while(true)
+    {
+        UpdateSensorValues();
+        if(lightval > WHITE)
+        {
+            BorderControl()
+        }
+        else if(possession)
+        {
+            Possesion();
+        }
+        else if(DIST < 100) //Calib
+        {
+            Target();
+        }
+        else
+        {
+            Align();
+        }
+    }
+}

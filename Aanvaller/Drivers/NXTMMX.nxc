@@ -1,5 +1,5 @@
-#ifndef __NXTMMX_LIB_NXC__
-#define __NXTMMX_LIB_NXC__
+#ifndef __NXTMMX_NXC__
+#define __NXTMMX_NXC__
 
 /************************************************************************/
 /*                                                                      */

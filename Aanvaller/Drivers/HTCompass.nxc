@@ -6,7 +6,7 @@
 
 void HTCompassSetMode(const byte &port, const byte &mode)
 {
-    while(I2CCheckStatus(port)); //== until NO_ERR
+    while(I2CCheckStatus(port)); //<==> until(... == NO_ERR);
     WriteI2CRegister(port, I2C_ADDR_DEFAULT, I2C_REG_CMD, mode);
 }
 

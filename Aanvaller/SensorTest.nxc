@@ -1,0 +1,12 @@
+#include "libAanvaller.h"
+
+task main()
+{
+    Init();
+    while(true)
+    {
+        UpdateIRValues();
+        DrawSensorValues();
+        Yield();
+    }
+}
