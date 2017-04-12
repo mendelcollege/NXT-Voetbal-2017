@@ -115,32 +115,61 @@ safecall int RelCompassVal()
 
 //Drive Stuff /*to-do*/
 
+enum drivetype
+{
+    PROPORTIONAL,
+    LINEAR,
+    ROTATIONAL,
+    DIRECTIONAL,
+    COMPASS
+};
+
+struct drivestate
+{
+    char x;
+    char y;
+    char rot;
+    byte pwr;
+    int dir;
+    byte type;
+};
+
+drivestate currentdrivestate;
+
+
 /*
  * ProportionalDrive: Give proportions in -100 to 100, and power.
  * For best accurracy use even numbers
  * If arguments are beyond limits expect undefined behaviour.
- * These flaws are left in for the sake of optimisation.
+ * These flaws are left in for the sake of speed.
  * This is the semi optimised version
  */
  
-void ProportionalDrive(const char x, const char y, const char rot, const byte power)
+ //ALLES MOET ANDERS MIJN GONIOMETRIE IS IN ALLE ASPECTEN PRECIES OMGEKEEERD !!!!
+ 
+void ProportionalDrive(const char x, const char y, const char rot, const byte pwr)
 {
-    long r,l,b; //right, left, back
+    int r,l,b; //right, left, back
     int max;
     r = (x >> 1) - (y * 111 >> 7) + rot;
     l = (x >> 1) + (y * 111 >> 7) + rot;
     b = -x + rot;
     max = ( (abs(r) > abs(l)) ? abs(r) : abs(l));
     max = ((max > abs(b)) ? max : abs(b));
-    r = r * power / max;
-    l = l * power / max;
-    b = b * power / max;
+    r = r * pwr / max;
+    l = l * pwr / max;
+    b = b * pwr / max;
     OnRev(MOTORRIGHT, r); //Should all be corresponding to polarity in which wheels turn left (robot turns right)
     OnRev(MOTORLEFT, l);
     OnRev(MOTORBACK, b);
+    currentdrivestate.x = x;
+    currentdrivestate.y = y;
+    currentdrivestate.rot = rot;
+    currentdrivestate.pwr = pwr;
+    currentdrivestate.type = PROPORTIONAL;
 }
 
-void LinearDrive(const char x, const char y, const char rot)
+void LinearDrive(const char x, const char y, char rot)
 {
     int r,l,b,max,min;
     r = (x >> 1) - y;
@@ -153,18 +182,25 @@ void LinearDrive(const char x, const char y, const char rot)
         l = l * 100 / max;
         b = b * 100 / max;
     }
-    max = ((r > l) ? r : l);
-    max = ((max > b) ? max : b);
-    min = ((r < l) ? r : l);
-    min = ((min < b) ? min : b);
-    if(rot + max > 100) rot = 100 - max;
-    if(rot + min < -100) rot = -100 - min;
-    r += rot;
-    l += rot;
-    b += rot;
+    else
+    {
+        max = ((r > l) ? r : l);
+        max = ((max > b) ? max : b);
+        min = ((r < l) ? r : l);
+        min = ((min < b) ? min : b);
+        if(rot + max > 100) rot = 100 - max;
+        if(rot + min < -100) rot = -100 - min;
+        r += rot;
+        l += rot;
+        b += rot;
+    }
     OnRev(MOTORRIGHT, r);
     OnRev(MOTORLEFT, l);
     OnRev(MOTORBACK, b);
+    currentdrivestate.x = x;
+    currentdrivestate.y = y;
+    currentdrivestate.rot = rot;
+    currentdrivestate.type = LINEAR;
 }
 
 void RotationalDrive(int x, int y, const char rot)
@@ -189,23 +225,31 @@ void RotationalDrive(int x, int y, const char rot)
     OnRev(MOTORRIGHT, r);
     OnRev(MOTORLEFT, l);
     OnRev(MOTORBACK, b);
+    currentdrivestate.x = x;
+    currentdrivestate.y = y;
+    currentdrivestate.rot = rot;
+    currentdrivestate.type = ROTATIONAL;
 }
 
-void DirectionalDrive(int dir, const char dirvel, const char rotvel, const byte power)
+void DirectionalDrive(int dir, const char dirvel, const char rotvel, const byte pwr)
 {
     int x, y;
-    x = (sin(dir) * dirvel);
-    y = (cos(dir) * dirvel);
-    ProportionalDrive(x, y, rotvel, power);
+    x = (sind(dir) * dirvel);
+    y = (cosd(dir) * dirvel);
+    ProportionalDrive(x, y, rotvel, pwr);
+    currentdrivestate.dir = dir;
+    currentdrivestate.type = DIRECTIONAL;
 }
 
-void CompassDrive(int reldir, const char dirvel, const char rotvel, const byte power)
+void CompassDrive(int reldir, const char dirvel, const char rotvel, const byte pwr)
 {
     int x, y;
-    reldir -= orient();
+    reldir -= orient;
     while(reldir <= -180) reldir += 360;
     while(reldir >   180) reldir -= 360;
-    DirectionalDrive(reldir, dirvel, rotvel, power);
+    DirectionalDrive(reldir, dirvel, rotvel, pwr);
+    currentdrivestate.dir = reldir;
+    currentdrivestate.type = COMPASS;
 }
 
 //Field dimensions (in cm)

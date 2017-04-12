@@ -39,7 +39,8 @@ task main()
             switch(interface)
             {
                 case 0:
-                    BorderControl();
+                    DirectionalDrive(45, 100, 0, 100);
+                    if(lightval > WHITE) BorderControl();
                     break;
                 case 1:
                     if(possession) Target();

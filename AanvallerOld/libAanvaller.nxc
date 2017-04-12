@@ -24,7 +24,6 @@
 #define USVAL SensorUS(S4)
 
 //Motorstuffs (to-do)
-//Motorstuffs (to-do)
 #define MOTORLEFT OUT_A
 #define MOTORBACK OUT_B
 #define MOTORRIGHT OUT_C
@@ -245,100 +244,7 @@ safecall int RelCompassVal()
     return tmp;
 }
 
-//Drive Stuff /*to-do*/
-
-/*
- * ProportionalDrive: Give proportions in -100 to 100, and power.
- * For best accurracy use even numbers
- * If arguments are beyond limits expect undefined behaviour.
- * These flaws are left in for the sake of optimisation.
- * This is the semi optimised version
- */
- 
-void ProportionalDrive(const char x, const char y, const char rot, const byte power)
-{
-    int r,l,b; //right, left, back
-    int max;
-    r = (x >> 1) - (y * 111 >> 7) + rot;
-    l = (x >> 1) + (y * 111 >> 7) + rot;
-    b = -x + rot;
-    max = ( (abs(r) > abs(l)) ? abs(r) : abs(l));
-    max = ((max > abs(b)) ? max : abs(b));
-    r = r * power / max;
-    l = l * power / max;
-    b = b * power / max;
-    OnFwd(MOTORRIGHT, r);
-    OnFwd(MOTORLEFT, l);
-    OnFwd(MOTORBACK, b);
-}
-
-void LinearDrive(int x, int y, int rot)
-{
-    int r,l,b,absmax,max,min;
-    r = (x >> 1) - y;
-    l = (x >> 1) + y;
-    b = -x;
-    absmax = ((abs(r) > abs(l)) ? abs(r) : abs(l));
-    if(absmax > 100)
-    {
-        r = r * 100 / max;
-        l = l * 100 / max;
-        b = b * 100 / max;
-    }
-    max = ((r > l) ? r : l);
-    max = ((max > b) ? max : b);
-    min = ((r < l) ? r : l);
-    min = ((min < b) ? min : b);
-    if(rot + max > 100) rot = 100 - max;
-    if(rot - min < -100) rot = -100 + min;
-    r += rot;
-    l += rot;
-    b += rot;
-    OnFwd(MOTORRIGHT, r);
-    OnFwd(MOTORLEFT, l);
-    OnFwd(MOTORBACK, b);
-}
-
-void RotationalDrive(int x, int y, const char rot)
-{
-    int r,l,b,absmax,max,min;
-    r = (x >> 1) - y;
-    l = (x >> 1) + y;
-    b = -x;
-    max = ((r > l) ? r : l);
-    max = ((max > b) ? max : b);
-    min = ((r < l) ? r : l);
-    min = ((min < b) ? min : b);
-    if(max + rot > 100 || min - rot < -100)
-    {
-        r = r * 100 / ((rot >> 7) ? (-100 + rot) : 100 - rot);
-        l = l * 100 / ((rot >> 7) ? (-100 + rot) : 100 - rot);
-        b = b * 100 / ((rot >> 7) ? (-100 + rot) : 100 - rot);
-    }
-    r += rot;
-    l += rot;
-    b += rot;
-    OnFwd(MOTORRIGHT, r);
-    OnFwd(MOTORLEFT, l);
-    OnFwd(MOTORBACK, b);
-}
-
-void DirectionalDrive(int dir, const char dirvel, const char rotvel, const byte power)
-{
-    int x, y;
-    x = (sin(dir) * dirvel);
-    y = (cos(dir) * dirvel);
-    ProportionalDrive(x, y, rotvel, power);
-}
-
-void CompassDrive(int reldir, const char dirvel, const char rotvel, const byte power)
-{
-    int x, y;
-    reldir -= RelCompassVal();
-    while(reldir <= -180) reldir += 360;
-    while(reldir >   180) reldir -= 360;
-    DirectionalDrive(dir, dirvel, rotvel, power);
-}
+//Drive stuff
 
 void TurnTo(int turn, char speed)
 {
