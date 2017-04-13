@@ -128,7 +128,7 @@ struct drivestate
 {
     char x;
     char y;
-    char rot;
+    char rot;           //positief = met de klok mee
     byte pwr;
     int dir;
     byte type;
@@ -203,7 +203,7 @@ void LinearDrive(const char x, const char y, char rot)
     currentdrivestate.type = LINEAR;
 }
 
-void RotationalDrive(int x, int y, const char rot)
+void RotationalDrive(const char x, const char y, const char rot)
 {
     int r,l,b,max,min;
     r = (x >> 1) - y;

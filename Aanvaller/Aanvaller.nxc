@@ -8,19 +8,19 @@ task main()
         UpdateSensorValues();
         if(lightval > WHITE)
         {
-            BorderControl()
+            BorderControl();
         }
         else if(possession)
         {
-            Possesion();
-        }
-        else if(DIST < 100) //Calib
-        {
             Target();
+        }
+        else if(balldist > 100) //Calib
+        {
+            Align();
         }
         else
         {
-            Align();
+            Search();
         }
     }
 }

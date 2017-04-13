@@ -1,19 +1,56 @@
+#include "libAanvaller.nxc"
+
 void BorderControl()
 {
+    switch(currentdrivestate.type)
+    {
+        case PROPORTIONAL:
 
+            break;
+        case waarde:
+            break;
+    }
+    Wait(500);
 }
 
 void Search()
 {
-
+    UpdateSensorValues();
+    if(balldir == 5) LinearDrive(0,40,0);
+    if(balldir < 5) RotationalDrive(0,0,80);
+    if(balldir > 5) RotationalDrive(0,0,-80);
 }
 
 void Align()
 {
-
+    int t0, t1;
+    t0 = CurrentTick();
+    while(balldist > 100 && !possession && lightval < WHITE)
+    {
+        UpdateSensorValues();
+        if(balldir == 5)
+        {
+            LinearDrive(0,80,0);
+            t1 = CurrentTick();
+        }
+        if(balldir < 5 && t1-t0 < 200) DirectionalDrive(315,80,0,100);
+        if(balldir < 5 && t1-t0 > 200) LinearDrive(100,0,0);
+        if(balldir > 5 && t1-t0 < 200) DirectionalDrive(45,80,0,-100);
+        if(balldir > 5 && t1-t0 < 200) LinearDrive(-100,0,0);
+    }
 }
 
 void Target()
 {
-
+    UpdateSensorValues();
+    if(orient <= 20 && orient >= -20 && possession)
+    {
+        LinearDrive(0,100,0);
+        if(CurrentTick() - tlastkick > RECHARGINGTIME + KICKTIME)
+        {
+            Kick();
+        }
+    }
+    if(orient > 20 && possession) OnRev(MOTORBACK,50);
+    if(orient < -20 && possession) OnRev(MOTORBACK,-50);
 }
