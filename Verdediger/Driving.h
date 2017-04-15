@@ -135,4 +135,10 @@ void CompassDrive(int reldir, const char dirvel, const char rotvel, const byte p
     currentdrivestate.type = COMPASS;
 }
 
+void SetupMotors()
+{
+    md1.begin(0x0f);
+    md2.begin(0x0e);
+}
+
 #endif

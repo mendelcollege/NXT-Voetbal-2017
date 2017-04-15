@@ -34,6 +34,7 @@ NewPing usb(USBPIN, USBPIN, MAXUSVAL);
 NewPing usr(USRPIN, USRPIN, MAXUSVAL);
 
 int xpos, ypos, usl0, usb0, usr0, xcenter;
+int uslval, usbval, usrval;
 
 //Field dimensions (in cm)
 #define STADIUMWIDTH 182
@@ -66,7 +67,6 @@ void SetupSensors()
 
 void UpdateSensorValues()
 {
-    int uslval, usbval, usrval;
     sensors_event_t mag_event;
     sensors_vec_t orientationvector;
     
@@ -92,6 +92,13 @@ void UpdateSensorValues()
     if(uslval > usrval) xpos = uslval - usl0;
     else xpos = usr0 - usrval;
     #endif
+}
+
+void TransmitSensorValues()
+{
+    char msg[30];
+    sprintf(msg, "Dir:%d\tDist:%d\tOrient:%d\t USL:%d\tUSB:%d\tUSR:%d\n", irdir, irdist, orient, uslval, usbval, usrval);
+    Cereal.print(msg);
 }
 
 #endif

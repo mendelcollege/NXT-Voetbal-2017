@@ -29,6 +29,9 @@ task main()
                     TextOut(6, LCD_LINE1, ": Search");
                     break;
                 case 4:
+                    TextOut(6, LCD_LINE1, ": Follow");
+                    break;
+                case 5:
                     interface = 0;
                     break;
             }
@@ -44,7 +47,7 @@ task main()
                     break;
                 case 1:
                     if(possession) Target();
-                    else Off(OUT_AC);
+                    else Off(MOTOR_ALL);
                     break;
                 case 2:
                     Align();
@@ -52,11 +55,14 @@ task main()
                 case 3:
                     Search();
                     break;
+                case 4:
+                    Follow();
+                    break;
             }
         }
         if(ButtonCount(BTNCENTER, true))
         {
-            Off(OUT_ABC);
+            Off(MOTOR_ALL);
             ClearScreen();
             running = !running;
         }

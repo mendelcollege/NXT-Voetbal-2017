@@ -5,8 +5,6 @@ task main()
     Init();
     while(true)
     {
-        UpdateIRValues();
-        DrawSensorValues();
-        Yield();
+        UpdateSensorValues();
     }
 }

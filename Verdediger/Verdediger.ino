@@ -1,20 +1,26 @@
+#define Cereal Serial //I am very funny
+
 #include <Wire.h>
 #include "Sensors.h"
 #include "Driving.h"
 
 
-#define Cereal Serial
+bool motorenabled;
+bool transmissionenabled;
+bool sleep;
 
 void setup()
 {
     Cereal.begin(9600);
     SetupSensors();
-    md1.begin(0x0f);
-    md2.begin(0x0e);
+    SetupMotors();
 }
 
 void loop()
 {
-  // put your main code here, to run repeatedly:
-
+    UpdateSensorValues();
+    if(UCSR0A & _BV(TXC0))
+    {
+        TransmitSensorValues();
+    }
 }

@@ -22,8 +22,8 @@
 #define MOTORALL OUT_ABC
 
 //Kicker
-#define RECHARGINGTIME 4000
-#define KICKTIME 30
+#define RECHARGINGTIME 4000 //Calib
+#define KICKTIME 30 //Calib
 unsigned long tlastkick = 0;
 
 void Kick()
@@ -38,23 +38,30 @@ void Kick()
 byte lightval;
 byte usval;
 int orient;
-int balldir, balldist;
-byte lastballdir = 1;
-byte possession = false;
+int balldist, lastballdist = 0;
+byte balldir, lastballdir = 1;
+byte ballstate;
+unsigned long lastseen, losttime;
 
 //Light Calib
-#define WHITE 20
-#define GREEN 5
+#define WHITE 20 //Calib
+#define GREEN 5 //Calib
+#define WHITEGREEN 15 //Calib
 
 //IRBall
-#define BALLDIRLEFT (dir < 5)
-#define BALLDIRRIGHT (dir > 5)
-#define BALLDIRSTRAIGHT (dir == 5)
-#define BALLDIRUNKNOWN (dir == 0)
-#define POSSESTHRES 240 //Calib
+#define POSSESSTHRES 240 //Calib
 #define LOSSTHRES 200 //Calib
+#define FARCLOSE 150 //Calib
 
-void HTEnhancedIRSeekerV2(const byte  port, int &dir = balldir, int &strength = balldist)
+enum ballstate
+{
+    LOST,
+    FAR,
+    CLOSE,
+    POSSESSION
+};
+
+void HTEnhancedIRSeekerV2(const byte port, int &dir = balldir, int &strength = balldist)
 {
     int cResp;
     byte cmdBuf[] = {0x10, 0x43};
@@ -126,11 +133,12 @@ enum drivetype
 
 struct drivestate
 {
-    char x;
-    char y;
+    char x;             //positief = rechts
+    char y;             //positief = vooruit
     char rot;           //positief = met de klok mee
     byte pwr;
     int dir;
+    char dirvel;
     byte type;
 };
 
@@ -145,9 +153,7 @@ drivestate currentdrivestate;
  * This is the semi optimised version
  */
  
- //ALLES MOET ANDERS MIJN GONIOMETRIE IS IN ALLE ASPECTEN PRECIES OMGEKEEERD !!!!
- 
-void ProportionalDrive(const char x, const char y, const char rot, const byte pwr)
+void ProportionalDrive(const char x, const char y, const char rot, const byte pwr = 100)
 {
     int r,l,b; //right, left, back
     int max;
@@ -231,7 +237,7 @@ void RotationalDrive(const char x, const char y, const char rot)
     currentdrivestate.type = ROTATIONAL;
 }
 
-void DirectionalDrive(int dir, const char dirvel, const char rotvel, const byte pwr)
+void DirectionalDrive(int dir, const char dirvel, const char rotvel, const byte pwr = 100)
 {
     int x, y;
     x = (sind(dir) * dirvel);
@@ -241,7 +247,7 @@ void DirectionalDrive(int dir, const char dirvel, const char rotvel, const byte 
     currentdrivestate.type = DIRECTIONAL;
 }
 
-void CompassDrive(int reldir, const char dirvel, const char rotvel, const byte pwr)
+void CompassDrive(int reldir, const char dirvel, const char rotvel, const byte pwr = 100)
 {
     int x, y;
     reldir -= orient;
@@ -273,28 +279,54 @@ void DrawSensorLabels()
     TextOut(0,  LCD_LINE5, "Dist:");
 }
 
-void UpdateSensorValues()
+void UpdateSensorValues() //Big data analysis? Small data analysis!
 {
-    HTEnhancedIRSeekerV2(IRSEEKERPORT);
+    HTEnhancedIRSeekerV2(IRSEEKERPORT, balldir, balldist);
     orient = RelCompassVal();
-    lightval = SENSOR_3;
+    lightval = Sensor(S3); //The proper way
     usval = SensorUS(USSENSORPORT);
-    if(!balldir) balldir = lastballdir;
-    else lastballdir = balldir;
-    if(balldist > POSSESTHRES) possession = true;
-    if(balldist < LOSSTHRES) possession = false;
-    #ifdef DISPLAYSENSOR
+    if(dist == 0)
+    {
+        losttime = CurrentTick() - lastseen;
+        if(losttime > 500) ballstate = LOST; //Calib
+        balldir = lastballdir;
+        balldist = lastballdist;
+    }
+    else
+    {
+        lastseen = CurrentTick();
+        losttime = 0;
+        lastballdir = balldir;
+        lastballdist = balldist;
+        if(balldir == 5 && balldist > POSSESSTHRES) ballstate = POSSESSION;
+        else if((balldist > LOSSTHRES && ballstate != POSSESSION) || balldist <= LOSSTHRES)
+        {
+            if(balldist > FARCLOSE) ballstate = CLOSE;
+            else ballstate = FAR;
+        }
+    }
+    dir -= 5;
+    //dir = -dir;
     NumOut(50,  LCD_LINE1, balldir, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE2, balldist, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE3, orient, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE4, lightval, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE5, usval, DRAW_OPT_CLEAR_EOL);
-    #endif
-    #ifdef DISPLAYBALLSTATE
-    if(!dist) TextOut(0, LCD_LINE6, "?????", DRAW_OPT_CLEAR_EOL);
-    else if(dir == 5) TextOut(0, LCD_LINE6, "Poss", DRAW_OPT_CLEAR_EOL);
-    else TextOut(0, LCD_LINE6, "Found", DRAW_OPT_CLEAR_EOL);
-    #endif
+    switch(BALLSTATE)
+    {
+        case POSSESION:
+            TextOut(0, LCD_LINE7, "POSSESSION");
+            break;
+        case CLOSE:
+            TextOut(0, LCD_LINE7, "CLOSE");
+            break;
+        case FAR:
+            TextOut(0, LCD_LINE7, "FAR");
+            break;
+        case LOST:
+            TextOut(0, LCD_LINE7, "LOST");
+            break;
+    }
 }
 
 //Initialisation
