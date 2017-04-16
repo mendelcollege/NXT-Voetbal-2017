@@ -6,7 +6,7 @@ void MordorControl()
     static unsigned long tlastdrivestate;
     if(tlastdrivestate == 0)
     {
-        lastdrivestate = currentdrivestate;
+        lastdrivestate = currentdrivestate; //I think this works.. Thx NXC for auto struct assignment!
         tlastdrivestate = CurrentTick();
     }
     else if(CurrentTick() - tlastdrivestate < 2000)     //Calib
@@ -41,63 +41,50 @@ void MordorControl()
 
 void Search()
 {
-    RotationalDrive(0, 0, 40 * sign(dir)); //Calib
+    RotationalDrive(0, 0, 40 * sign(balldir)); //Calib
 }
 
 void Follow()
 {
-    if(dir == 0) LinearDrive(0, 100, 0);
-    switch(abs(dir))
+    if(balldir == 0) LinearDrive(0, 100, 0);
+    switch(abs(balldir))
     {
         case 1:
-            LinearDrive(0, 100, 10 * sign(dir));  //Calib
+            LinearDrive(0, 100, 10 * sign(balldir));  //Calib
             break;
         case 2:
-            LinearDrive(100 * sign(dir),0,40 * sign(dir));  //Calib
+            LinearDrive(100 * sign(balldir), 0, 40 * sign(balldir));  //Calib
             //DirectionalDrive(45 * sign(dir), 100, 20 * sign(dir)); //In geval van goede sensor //Calib
             break;
         case 3:
-            DirectionalDrive(0, 0, 100 * sign(dir));  //Calib (goed rondje)
+            DirectionalDrive(0, 0, 100 * sign(balldir));  //Calib (goed rondje)
             
             break;
         case 4:
-            DirectionalDrive(0, 0, 100 * sign(dir));  //Calib (goed rondje)
+            DirectionalDrive(0, 0, 100 * sign(balldir));  //Calib (goed rondje)
             break;
     }
 }
 
 void Align()
 {
-    int t0, t1;
-    t0 = CurrentTick();
-    while(ballstate == CLOSE && lightval < WHITE)   //ballsaté
-    {
-        UpdateSensorValues();
-        if(balldir == 5)
-        {
-            LinearDrive(0,80,0);
-            t1 = CurrentTick();
-        }
-        if(balldir < 5 && t1-t0 < 200) DirectionalDrive(315, 80, 0, 100);
-        if(balldir < 5 && t1-t0 > 200) LinearDrive(100, 0, 0);
-        if(balldir > 5 && t1-t0 < 200) DirectionalDrive(45, 80, 0, -100);
-        if(balldir > 5 && t1-t0 < 200) LinearDrive(-100, 0, 0);
-    }
+
 }
 
 void Target()
 {
-    if(orient <= 20 && orient >= -20 && possession)
+    if(abs(orient) < 20)
     {
-        LinearDrive(0,100,0);
-        if(CurrentTick() - tlastkick > RECHARGINGTIME)
+        LinearDrive(0,100,0); //Nog een ietsie pietsie proportioneel compas corrigeren aub
+        Wait(50); //Calib
+        if(CurrentTick() - tlastkick >= RECHARGINGTIME)
         {
             Kick();
         }
     }
     else;
     //Hier wiskunde / kalibratie
-    // Waardes keer (orient >> 15) of iets proportioneels
+    // Waardes keer sign(orient) of iets proportioneels (draaing om bal heen)
 }
 
 task main()
@@ -111,9 +98,9 @@ task main()
             TextOut(0, LCD_LINE7, "MordorControl");
             MordorControl();
         }
-        else switch(BALLSTATE)
+        else switch(ballstate)
         {
-            case POSSESION:
+            case POSSESSION:
                 TextOut(0, LCD_LINE7, "Target");
                 Target();
                 break;

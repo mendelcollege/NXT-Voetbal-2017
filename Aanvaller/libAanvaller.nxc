@@ -41,7 +41,7 @@ int orient;
 int balldist, lastballdist = 0;
 byte balldir, lastballdir = 1;
 byte ballstate;
-unsigned long lastseen, losttime;
+unsigned long tlastseen, losttime, tlastballinfront;
 
 //Light Calib
 #define WHITE 20 //Calib
@@ -296,16 +296,16 @@ void UpdateSensorValues() //Big data analysis? Small data analysis!
     orient = RelCompassVal();
     lightval = Sensor(S3); //The proper way
     usval = SensorUS(USSENSORPORT);
-    if(dist == 0)
+    if(balldist == 0)
     {
-        losttime = CurrentTick() - lastseen;
+        losttime = CurrentTick() - tlastseen;
         if(losttime > 500) ballstate = LOST; //Calib
         balldir = lastballdir;
         balldist = lastballdist;
     }
     else
     {
-        lastseen = CurrentTick();
+        tlastseen = CurrentTick();
         losttime = 0;
         lastballdir = balldir;
         lastballdist = balldist;
@@ -316,16 +316,19 @@ void UpdateSensorValues() //Big data analysis? Small data analysis!
             else ballstate = FAR;
         }
     }
-    dir -= 5;
-    //dir = -dir;
+    balldir -= 5;
+    //balldir = -balldir; //Optional flip so that rightward values are positive
+    if(abs(balldir) <= 1) tlastballinfront = CurrentTick();
+    
     NumOut(50,  LCD_LINE1, balldir, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE2, balldist, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE3, orient, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE4, lightval, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE5, usval, DRAW_OPT_CLEAR_EOL);
-    switch(BALLSTATE)
+    
+    switch(ballstate)
     {
-        case POSSESION:
+        case POSSESSION:
             TextOut(0, LCD_LINE7, "POSSESSION");
             break;
         case CLOSE:
