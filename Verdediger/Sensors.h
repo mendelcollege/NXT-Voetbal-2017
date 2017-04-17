@@ -17,17 +17,30 @@ Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(40273);
 int orient;
 
 //IR
+#define POSSESSTHRES 240 //Calib
+#define LOSSTHRES 200 //Calib
+#define FARCLOSE 150 //Calib
+
+enum ballstate
+{
+    LOST,
+    FAR,
+    CLOSE,
+    POSSESSION
+};
+
 struct InfraredResult irdata;
-char balldir;
-int balldist;
+int balldist, lastballdist = 0;
+byte balldir, lastballdir = 1;
+byte ballstate;
+unsigned long tlastseen, losttime, tlaststraight, straighttime;
 
 //Ultrasone
 #define MAXUSVAL 300
-#define AUTOCENTER
 
-#define USLPIN 0
-#define USBPIN 1
-#define USRPIN 2
+#define USLPIN 4
+#define USBPIN 5
+#define USRPIN 6
 
 NewPing usl(USLPIN, USLPIN, MAXUSVAL);
 NewPing usb(USBPIN, USBPIN, MAXUSVAL);
@@ -50,7 +63,7 @@ int uslval, usbval, usrval;
 //Sensor global
 void SetupSensors()
 {
-    InfraredSeeker::Initialize();
+    InfraredSeeker::Initialize(); //Includes wire.begin();
     if(!mag.begin())
     {
         /* There was a problem detecting the LSM303 ... check your connections */
@@ -81,7 +94,38 @@ void UpdateSensorValues()
     irdata = InfraredSeeker::ReadAC();
     balldir = irdata.Direction;
     balldist = irdata.Strength;
-    
+    if(balldist == 0)
+    {
+        losttime = millis() - tlastseen;
+        if(losttime > 500) ballstate = LOST; //Calib
+        balldir = lastballdir;
+        balldist = lastballdist;
+    }
+    else
+    {
+        tlastseen = millis();
+        losttime = 0;
+        lastballdir = balldir;
+        lastballdist = balldist;
+        if(balldir == 5 && balldist > POSSESSTHRES) ballstate = POSSESSION;
+        else if((balldist > LOSSTHRES && ballstate != POSSESSION) || balldist <= LOSSTHRES)
+        {
+            if(balldist > FARCLOSE) ballstate = CLOSE;
+            else ballstate = FAR;
+        }
+    }
+    balldir -= 5;
+    //balldir = -balldir; //Optional flip so that rightward values are positive
+    if(balldir == 0)
+    {
+        if(!tlaststraight) tlaststraight = millis();
+        straighttime = tlaststraight - millis();
+    }
+    else
+    {
+        tlaststraight = 0;
+        straighttime = 0;
+    }
     uslval = usl.ping_cm();
     usbval = usb.ping_cm();
     usrval = usr.ping_cm();
@@ -96,8 +140,8 @@ void UpdateSensorValues()
 
 void TransmitSensorValues()
 {
-    char msg[30];
-    sprintf(msg, "Dir:%d\tDist:%d\tOrient:%d\t USL:%d\tUSB:%d\tUSR:%d\n", irdir, irdist, orient, uslval, usbval, usrval);
+    char msg[50];
+    sprintf(msg, "Dir:%d\tDist:%d\tOrient:%d\t USL:%d\tUSB:%d\tUSR:%d\n", balldir, balldist, orient, uslval, usbval, usrval);
     Cereal.print(msg);
 }
 
