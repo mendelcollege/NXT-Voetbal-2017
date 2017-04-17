@@ -41,7 +41,7 @@ int orient;
 int balldist, lastballdist = 0;
 byte balldir, lastballdir = 1;
 byte ballstate;
-unsigned long tlastseen, losttime, tlastballinfront;
+unsigned long tlastseen, losttime, tlastinfront, infronttime;
 
 //Light Calib
 #define WHITE 20 //Calib
@@ -230,15 +230,18 @@ void RotationalDrive(const char x, const char y, const char rot)
     max = ((max > b) ? max : b);
     min = ((r < l) ? r : l);
     min = ((min < b) ? min : b);
-    if(max + rot > 100 || min - rot < -100)
+    if(max + rot > 100 || min + rot < -100)
     {
-        r = r * 100 / ((rot >> 7) ? (-100 + rot) : (100 - rot));
-        l = l * 100 / ((rot >> 7) ? (-100 + rot) : (100 - rot));
-        b = b * 100 / ((rot >> 7) ? (-100 + rot) : (100 - rot));
+        r = r * (100 * sign(rot) - rot) / 100 + rot;
+        l = l * (100 * sign(rot) - rot) / 100 + rot;
+        b = b * (100 * sign(rot) - rot) / 100 + rot;
     }
-    r += rot;
-    l += rot;
-    b += rot;
+    else
+    {
+        r += rot;
+        l += rot;
+        b += rot;
+    }
     OnRev(MOTORRIGHT, r);
     OnRev(MOTORLEFT, l);
     OnRev(MOTORBACK, b);
@@ -290,12 +293,14 @@ void DrawSensorLabels()
     TextOut(0,  LCD_LINE5, "Dist:");
 }
 
-void UpdateSensorValues() //Big data analysis? Small data analysis!
+void UpdateSensorValues()
 {
     HTEnhancedIRSeekerV2(IRSEEKERPORT, balldir, balldist);
     orient = RelCompassVal();
     lightval = Sensor(S3); //The proper way
     usval = SensorUS(USSENSORPORT);
+    
+    //Fck big data analysis. Small data analysis FTW!
     if(balldist == 0)
     {
         losttime = CurrentTick() - tlastseen;
@@ -318,7 +323,16 @@ void UpdateSensorValues() //Big data analysis? Small data analysis!
     }
     balldir -= 5;
     //balldir = -balldir; //Optional flip so that rightward values are positive
-    if(abs(balldir) <= 1) tlastballinfront = CurrentTick();
+    if(abs(balldir) <= 1)
+    {
+        if(!tlastinfront) tlastinfront = CurrentTick();
+        infronttime = CurrentTick() - tlastinfront;
+    }
+    else
+    {
+        tlastinfront = 0;
+        infronttime = 0;
+    }
     
     NumOut(50,  LCD_LINE1, balldir, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE2, balldist, DRAW_OPT_CLEAR_EOL);
