@@ -1,5 +1,4 @@
 #include "libAanvaller.nxc"
-#include "Behaviour.nxc"
 
 task main()
 {

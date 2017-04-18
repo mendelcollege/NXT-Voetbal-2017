@@ -64,7 +64,6 @@ task main()
             {
                 Off(MOTORALL);
                 BoemBoemBatsiBa();
-                ResetUS();
             }
             else if(dist > BALLREALCLOSE) GoForward(85);
             else if(dist > BALLSEMICLOSE) GoForward(100);

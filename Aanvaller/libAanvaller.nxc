@@ -16,9 +16,9 @@
 #define MMXPORT S4
 
 //Motorstuffs (to-do)
-#define MOTORLEFT OUT_A
-#define MOTORBACK OUT_B
-#define MOTORRIGHT OUT_C
+#define MOTORLEFT OUT_A     //snelheid van 50 komt overeen met ~1    rotation/sec
+#define MOTORBACK OUT_B     //snelheid van 50 komt overeen met ~1.5  rotation/sec
+#define MOTORRIGHT OUT_C    //snelheid van 50 komt overeen met ~1.35 rotation/sec
 #define MOTORALL OUT_ABC
 
 //Kicker
@@ -39,7 +39,7 @@ byte lightval;
 byte usval;
 int orient;
 int balldist, lastballdist = 0;
-byte balldir, lastballdir = 1;
+char balldir, lastballdir = 1;
 byte ballstate;
 unsigned long tlastseen, losttime, tlastinfront, infronttime;
 
@@ -343,16 +343,16 @@ void UpdateSensorValues()
     switch(ballstate)
     {
         case POSSESSION:
-            TextOut(0, LCD_LINE7, "POSSESSION");
+            TextOut(0, LCD_LINE7, "POSSESSION", DRAW_OPT_CLEAR_EOL);
             break;
         case CLOSE:
-            TextOut(0, LCD_LINE7, "CLOSE");
+            TextOut(0, LCD_LINE7, "CLOSE", DRAW_OPT_CLEAR_EOL);
             break;
         case FAR:
-            TextOut(0, LCD_LINE7, "FAR");
+            TextOut(0, LCD_LINE7, "FAR", DRAW_OPT_CLEAR_EOL);
             break;
         case LOST:
-            TextOut(0, LCD_LINE7, "LOST");
+            TextOut(0, LCD_LINE7, "LOST", DRAW_OPT_CLEAR_EOL);
             break;
     }
 }

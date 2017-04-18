@@ -71,11 +71,12 @@ void Align()
 
 }
 
-void Target()
+void Target()       //Vrot = Vx/r (Vrot is rotating speed, Vx is snelheid x-richting, r is de straal van de cirkel die de robot maakt)
 {
     if(abs(orient) < 20)
     {
-        LinearDrive(0,100,0); //Nog een ietsie pietsie proportioneel compas corrigeren aub
+        if(orient < 0) LinearDrive(0, 100, -10)
+        if(orient > 0) LinearDrive(0, 100,  10)
         Wait(50); //Calib
         if(CurrentTick() - tlastkick >= RECHARGINGTIME)
         {

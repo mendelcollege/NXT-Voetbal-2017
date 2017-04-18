@@ -144,6 +144,8 @@ void Deflect()
     else if(balldir == 0) LinearDrive(0, 100, 0);
 }
 
+static unsigned long t0;
+
 void setup()
 {
     Cereal.begin(9600);
@@ -151,7 +153,66 @@ void setup()
     SetupMotors();
     pinMode(SENSORLOGWITCHPIN, INPUT);
     pinMode(MOTORSWITCHPIN, INPUT);
+    t0 = millis();
 }
+
+#define TESTDIRECTIONAL
+#define DriveFunction RotationalDrive
+
+#ifdef MOTORTEST
+#ifdef TESTDIRECTIONAL
+
+void loop()
+{
+    static int i = 0;
+    if(!t0) t0 = millis();
+    if(digitalRead(SENSORLOGWITCHPIN)) if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
+    if(digitalRead(MOTORSWITCHPIN))
+    {
+        StopAllMotors();
+    }
+    else
+    {
+        if(millis() - t0 >= 50)
+        {
+            t0 = 0;
+            i++;
+            if(i == 360) i = 0;
+        }
+    }
+}
+
+#else
+
+void loop()
+{
+    if(digitalRead(SENSORLOGWITCHPIN)) if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
+    if(digitalRead(MOTORSWITCHPIN))
+    {
+        StopAllMotors();
+    }
+    else
+    {
+        if(millis() - t0 < 1000) DriveFunction(0, 0, 100);
+        else if(millis() - t0 < 2000) DriveFunction(0, 0, -100);
+        else if(millis() - t0 < 3000) DriveFunction(0, 100, 0);
+        else if(millis() - t0 < 4000) DriveFunction(0, -100, 0);
+        else if(millis() - t0 < 5000) DriveFunction(100, 0, 0);
+        else if(millis() - t0 < 6000) DriveFunction(100, 0, 0);
+        else if(millis() - t0 < 7000) DriveFunction(100, 100, 0);
+        else if(millis() - t0 < 8000) DriveFunction(-100, -100, 0);
+        else if(millis() - t0 < 9000) DriveFunction(-100, 0, 50);
+        else
+        {
+            StopAllMotors();
+            delay(500);
+            t0 = millis();
+        }
+    }
+}
+
+#endif
+#else
 
 void loop()
 {
@@ -180,3 +241,5 @@ void loop()
         }
     }
 }
+
+#endif

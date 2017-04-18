@@ -31,7 +31,7 @@ enum ballstate
 
 struct InfraredResult irdata;
 int balldist, lastballdist = 0;
-byte balldir, lastballdir = 1;
+char balldir, lastballdir = 1;
 byte ballstate;
 unsigned long tlastseen, losttime, tlaststraight, straighttime;
 
