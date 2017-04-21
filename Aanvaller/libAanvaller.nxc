@@ -322,7 +322,7 @@ void UpdateSensorValues()
         }
     }
     balldir -= 5;
-    //balldir = -balldir; //Optional flip so that rightward values are positive
+    balldir = -balldir; //Optional flip so that rightward values are positive
     if(abs(balldir) <= 1)
     {
         if(!tlastinfront) tlastinfront = CurrentTick();

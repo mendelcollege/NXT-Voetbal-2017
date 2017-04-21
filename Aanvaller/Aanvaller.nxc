@@ -50,43 +50,94 @@ void Follow()
     switch(abs(balldir))
     {
         case 1:
-            LinearDrive(0, 100, 10 * sign(balldir));  //Calib
+            LinearDrive(0, 100, -10 * sign(balldir));  //Calib
             break;
         case 2:
             LinearDrive(100 * sign(balldir), 0, 40 * sign(balldir));  //Calib
             //DirectionalDrive(45 * sign(dir), 100, 20 * sign(dir)); //In geval van goede sensor //Calib
             break;
         case 3:
-            DirectionalDrive(0, 0, 100 * sign(balldir));  //Calib (goed rondje)
+            DirectionalDrive(0, 0, -100 * sign(balldir));  //Calib (goed rondje)
             
             break;
         case 4:
-            DirectionalDrive(0, 0, 100 * sign(balldir));  //Calib (goed rondje)
+            DirectionalDrive(0, 0, -100 * sign(balldir));  //Calib (goed rondje)
             break;
     }
 }
 
 void Align()
 {
-
+    switch(balldir)
+    {
+        case 1:
+            if(orient < -20) DirectionalDrive(-135, 100,  30, 100);
+            if(orient >  20) DirectionalDrive(-135, 100, -30, 100);
+            else             CompassDrive(135, 100, 0, 100);
+            break;
+        case 2:
+            if(orient < -20) DirectionalDrive(-135, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(-135, 100, -30, 100);
+            else CompassDrive(135, 100, 0, 100);
+            break;
+        case 3:
+            if(orient < -20) DirectionalDrive(135, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(135, 100, -30, 100);
+            else CompassDrive(180, 100, 0, 100);
+            break;
+        case 4:
+            if(orient < -20) DirectionalDrive(45, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(45, 100, -30, 100);
+            else CompassDrive(90, 100, 0, 100);
+            break;
+        case 5:
+            if(orient < -20) DirectionalDrive(0, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(0, 100, -30, 100);
+            else CompassDrive(0, 100, 0, 100);
+            break;
+        case 6:
+            if(orient < -20) DirectionalDrive(-45, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(-45, 100, -30, 100);
+            else CompassDrive(-45, 100, 0, 100);
+            break;
+        case 7:
+            if(orient < -20) DirectionalDrive(-135, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(-135, 100, -30, 100);
+            else CompassDrive(-135, 100, 30, 100);
+            break;
+        case 8:
+            if(orient < -20) DirectionalDrive(135, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(135, 100, -30, 100);
+            else CompassDrive(135, 100, 0, 100);
+            break;
+        case 9:
+            if(orient < -20) DirectionalDrive(135, 100, 30, 100);
+            if(orient >  20) DirectionalDrive(135, 100, -30, 100);
+            else CompassDrive(135, 100, 0, 100);
+    }
 }
 
 void Target()       //Vrot = Vx/r (Vrot is rotating speed, Vx is snelheid x-richting, r is de straal van de cirkel die de robot maakt)
 {
+    int r;
+    int Vrot;
     if(abs(orient) < 20)
     {
-        if(orient < 0) LinearDrive(0, 100, -10)
-        if(orient > 0) LinearDrive(0, 100,  10)
+        if(orient < 0) LinearDrive(0, 100, -10);
+        if(orient > 0) LinearDrive(0, 100,  10);
         Wait(50); //Calib
-        if(CurrentTick() - tlastkick >= RECHARGINGTIME)
-        {
-            Kick();
-        }
+        if(CurrentTick() - tlastkick >= RECHARGINGTIME) Kick();
     }
-    else;
-    //Hier wiskunde / kalibratie
-    // Waardes keer sign(orient) of iets proportioneels (draaing om bal heen)
+    else
+    {
+        
+        Vrot = 50;           //Calib
+        r = 11.6;           //Calib
+        ProportionalDrive(Vrot/r  * sign(balldir), 0, Vrot * sign(balldir), 100);
+    }
 }
+
+//#define CHECKLINE
 
 task main()
 {
@@ -94,27 +145,30 @@ task main()
     while(true)
     {
         UpdateSensorValues();
+        #ifdef CHECKLINE
         if(lightval > WHITEGREEN)
         {
             TextOut(0, LCD_LINE7, "MordorControl");
             MordorControl();
         }
-        else switch(ballstate)
+        else
+        #endif
+        switch(ballstate)
         {
             case POSSESSION:
-                TextOut(0, LCD_LINE7, "Target");
+                TextOut(0, LCD_LINE8, "Target");
                 Target();
                 break;
             case CLOSE:
-                TextOut(0, LCD_LINE7, "Align");
+                TextOut(0, LCD_LINE8, "Align");
                 Align();
                 break;
             case FAR:
-                TextOut(0, LCD_LINE7, "Follow");
+                TextOut(0, LCD_LINE8, "Follow");
                 Follow();
                 break;
             case LOST:
-                TextOut(0, LCD_LINE7, "Search");
+                TextOut(0, LCD_LINE8, "Search");
                 Search();
                 break;
         }

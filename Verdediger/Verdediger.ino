@@ -1,8 +1,14 @@
 //Serial
-#define Cereal Serial //I am very funny
+#define Cereal Serial //I am a funny guy
 
 //Program options
 #define AUTOCENTER
+
+//#define ENABLESWITCHES
+
+//#define MOTORTEST
+    #define TESTDIRECTIONAL
+    #define DriveFunction RotationalDrive
 
 //Handydandy sign function
 template <typename type> type sign(type value)
@@ -156,9 +162,6 @@ void setup()
     t0 = millis();
 }
 
-#define TESTDIRECTIONAL
-#define DriveFunction RotationalDrive
-
 #ifdef MOTORTEST
 #ifdef TESTDIRECTIONAL
 
@@ -217,7 +220,11 @@ void loop()
 void loop()
 {
     UpdateSensorValues();
-    if(digitalRead(SENSORLOGWITCHPIN)) if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
+    #ifdef ENABLESWITCHES
+    if(digitalRead(SENSORLOGWITCHPIN))
+    #endif
+        if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
+    #ifdef ENABLESWITCHES
     if(digitalRead(MOTORSWITCHPIN))
     {
         StopAllMotors();
@@ -240,6 +247,23 @@ void loop()
                 break;
         }
     }
+    #else
+            switch(currentbehaviour)
+        {
+            case GUARD:
+                Guard();
+                break;
+            case TRACK:
+                Track();
+                break;
+            case RETURN:
+                ReturnToBeginPos();
+                break;
+            case DEFLECT:
+                Deflect();
+                break;
+        }
+    #endif
 }
 
 #endif

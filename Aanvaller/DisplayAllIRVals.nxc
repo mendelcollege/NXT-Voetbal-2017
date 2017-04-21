@@ -63,12 +63,14 @@ task main()
 {
     SetSensorLowspeed(S1);
     int cResp = 6;
-    byte cmdBuf[] = {0x10, 0x49};
+    byte ACcmdbuf[] = {0x10, 0x49};
+    byte DCcmdbuf[] = {0x10, 0x42};
     byte respBuf[6];
     bool fSuccess;
+    int dir, dist;
     while(true)
     {
-        fSuccess = I2CBytes(S1, cmdBuf, cResp, respBuf);
+        fSuccess = I2CBytes(S1, ACcmdbuf, cResp, respBuf);
         if(fSuccess)
         {
             NumOut(0, LCD_LINE1, respBuf[0], DRAW_OPT_CLEAR_EOL);
@@ -78,6 +80,19 @@ task main()
             NumOut(0, LCD_LINE5, respBuf[4], DRAW_OPT_CLEAR_EOL);
             NumOut(0, LCD_LINE6, respBuf[5], DRAW_OPT_CLEAR_EOL);
         }
+        fSuccess = I2CBytes(S1, DCcmdbuf, cResp, respBuf);
+        if(fSuccess)
+        {
+            NumOut(50, LCD_LINE1, respBuf[0], DRAW_OPT_CLEAR_EOL);
+            NumOut(50, LCD_LINE2, respBuf[1], DRAW_OPT_CLEAR_EOL);
+            NumOut(50, LCD_LINE3, respBuf[2], DRAW_OPT_CLEAR_EOL);
+            NumOut(50, LCD_LINE4, respBuf[3], DRAW_OPT_CLEAR_EOL);
+            NumOut(50, LCD_LINE5, respBuf[4], DRAW_OPT_CLEAR_EOL);
+            NumOut(50, LCD_LINE6, respBuf[5], DRAW_OPT_CLEAR_EOL);
+        }
+        HTEnhancedIRSeekerV2(S1, dir, dist);
+        NumOut(0, LCD_LINE8, dir, DRAW_OPT_CLEAR_EOL);
+        NumOut(50, LCD_LINE8, dist, DRAW_OPT_CLEAR_EOL);
         Wait(50);
     }
 }
