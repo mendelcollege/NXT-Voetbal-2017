@@ -1,6 +1,8 @@
 #ifndef __DRIVING_H__
 #define __DRIVING_H__
 
+#define USEGROVELIB
+
 //MotorDriver
 
 /* 
@@ -148,10 +150,10 @@ void ProportionalDrive(const char x, const char y, const char rot, const char pw
     maxpwr = + abs(x) + abs(y) + abs(rot);
     for(byte i = M1; i <= M4; i++) motorpwr[i] = motorpwr[i] * pwr / maxpwr;
     #ifdef USEGROVELIB
-    md1.speed(MOTOR1, motorpwr[M1]);
-    md1.speed(MOTOR2, motorpwr[M4]);
-    md2.speed(MOTOR1, motorpwr[M2]);
-    md2.speed(MOTOR2, motorpwr[M3]);
+    md1.speed(MOTOR1, -motorpwr[M1]);
+    md1.speed(MOTOR2, -motorpwr[M4]);
+    md2.speed(MOTOR1, -motorpwr[M2]);
+    md2.speed(MOTOR2, -motorpwr[M3]);
     #else
     SendMotorValues(motorpwr);
     #endif
@@ -178,10 +180,10 @@ void LinearDrive(const char x, const char y, char rot)
         for(byte i = M1; i <= M4; i++) motorpwr[i] += rot;   
     }
     #ifdef USEGROVELIB
-    md1.speed(MOTOR1, motorpwr[M1]);
-    md1.speed(MOTOR2, motorpwr[M4]);
-    md2.speed(MOTOR1, motorpwr[M2]);
-    md2.speed(MOTOR2, motorpwr[M3]);
+    md1.speed(MOTOR1, -motorpwr[M1]);
+    md1.speed(MOTOR2, -motorpwr[M4]);
+    md2.speed(MOTOR1, -motorpwr[M2]);
+    md2.speed(MOTOR2, -motorpwr[M3]);
     #else
     SendMotorValues(motorpwr);
     #endif
@@ -202,10 +204,10 @@ void RotationalDrive(int x, int y, const char rot)
     if(maxpwr + rot > 100 || -maxpwr + rot < -100) for(byte i = M1; i <= M4; i++) motorpwr[i] = motorpwr[i] * (100 * sign(rot) - rot) / 100 + rot; //Can u follow it?
     else for(byte i = M1; i <= M4; i++) motorpwr[i] += rot;
     #ifdef USEGROVELIB
-    md1.speed(MOTOR1, motorpwr[M1]);
-    md1.speed(MOTOR2, motorpwr[M4]);
-    md2.speed(MOTOR1, motorpwr[M2]);
-    md2.speed(MOTOR2, motorpwr[M3]);
+    md1.speed(MOTOR1, -motorpwr[M1]);
+    md1.speed(MOTOR2, -motorpwr[M4]);
+    md2.speed(MOTOR1, -motorpwr[M2]);
+    md2.speed(MOTOR2, -motorpwr[M3]);
     #else
     SendMotorValues(motorpwr);
     #endif

@@ -14,7 +14,7 @@
 //Compass
 Adafruit_9DOF dof = Adafruit_9DOF();
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(40273);
-int orient;
+int orient, beginorient;
 
 //IR
 #define POSSESSTHRES 240 //Calib
@@ -39,8 +39,8 @@ unsigned long tlastseen, losttime, tlaststraight, straighttime;
 #define MAXUSVAL 300
 
 #define USLPIN 4
-#define USBPIN 5
-#define USRPIN 6
+#define USBPIN 6
+#define USRPIN 5
 
 NewPing usl(USLPIN, USLPIN, MAXUSVAL);
 NewPing usb(USBPIN, USBPIN, MAXUSVAL);
@@ -63,16 +63,40 @@ int uslval, usbval, usrval;
 //Sensor global
 void SetupSensors()
 {
+    sensors_event_t mag_event;
+    sensors_vec_t orientationvector;
+    
     InfraredSeeker::Initialize(); //Includes wire.begin();
+    Serial.println("IR Set up");
+    Serial.flush();
+    
     if(!mag.begin())
     {
-        /* There was a problem detecting the LSM303 ... check your connections */
+        //There was a problem detecting the LSM303 ... check your connections 
         Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
-        while(1);
+        Serial.flush();
     }
+    
+    Serial.println("Mag Set up");
+    Serial.flush();
+
+    mag.getEvent(&mag_event);
+    if (dof.magGetOrientation(SENSOR_AXIS_Y, &mag_event, &orientationvector))
+    {
+        beginorient = (int) orientationvector.heading; //Which one of them is the question. Pitch, yawn or azimsdjfhskdhf?
+    }
+    
+    
+    Serial.println("Mag first read");
+    Serial.flush();
+    
     usl0 = usl.ping_median();
     usb0 = usb.ping_median();
     usr0 = usr.ping_median();
+    Serial.println("US Set up");
+    Serial.flush();
+    delay(500);
+    
     #ifdef AUTOCENTER
     xcenter = (usl0 + usr0) >> 1;
     #endif
@@ -84,9 +108,10 @@ void UpdateSensorValues()
     sensors_vec_t orientationvector;
     
     mag.getEvent(&mag_event);
-    if (dof.magGetOrientation(SENSOR_AXIS_Z, &mag_event, &orientationvector))
+    if (dof.magGetOrientation(SENSOR_AXIS_Y, &mag_event, &orientationvector))
     {
         orient = (int) orientationvector.heading; //Which one of them is the question. Pitch, yawn or azimsdjfhskdhf?
+        orient -= beginorient;
         while(orient < -180) orient += 360;
         while(orient > 180) orient -=360;
     }
@@ -97,7 +122,7 @@ void UpdateSensorValues()
     if(balldist == 0)
     {
         losttime = millis() - tlastseen;
-        if(losttime > 500) ballstate = LOST; //Calib
+        if(losttime > 100) ballstate = LOST; //Calib
         balldir = lastballdir;
         balldist = lastballdist;
     }
@@ -115,7 +140,7 @@ void UpdateSensorValues()
         }
     }
     balldir -= 5;
-    //balldir = -balldir; //Optional flip so that rightward values are positive
+    balldir = -balldir; //Optional flip so that rightward values are positive
     if(balldir == 0)
     {
         if(!tlaststraight) tlaststraight = millis();
@@ -129,6 +154,8 @@ void UpdateSensorValues()
     uslval = usl.ping_cm();
     usbval = usb.ping_cm();
     usrval = usr.ping_cm();
+    xpos = uslval - usl0;
+    /*
     #ifdef AUTOCENTER
     if(uslval > usrval) xpos = uslval - xcenter;
     else xpos = xcenter - usrval;
@@ -136,6 +163,7 @@ void UpdateSensorValues()
     if(uslval > usrval) xpos = uslval - usl0;
     else xpos = usr0 - usrval;
     #endif
+    */
 }
 
 void TransmitSensorValues()
