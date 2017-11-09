@@ -46,12 +46,13 @@ unsigned long tlastseen, losttime, tlastinfront, infronttime;
 //Light Calib
 #define WHITE 20 //Calib
 #define GREEN 5 //Calib
-#define WHITEGREEN 15 //Calib
+#define WHITEGREEN 10 //Calib
 
 //IRBall
 #define POSSESSTHRES 240 //USsensor //Calib
 #define LOSSTHRES 200 //Calib
-#define FARCLOSE 50 //Calib
+#define FARCLOSE 60 //Calib
+#define FRONTFARCLOSE 120
 
 //USsensor
 #define USTHRASH 7
@@ -309,7 +310,7 @@ void UpdateSensorValues()
     if(balldist == 0)
     {
         losttime = CurrentTick() - tlastseen;
-        if(losttime > 200) currentballstate = LOST; //Calib
+        if(losttime > 100) currentballstate = LOST; //Calib
         balldir = lastballdir;
         balldist = lastballdist;
     }
@@ -318,19 +319,28 @@ void UpdateSensorValues()
         tlastseen = CurrentTick();
         lastballdir = balldir;
         lastballdist = balldist;
-        if(usval <= USTHRASH && balldir == 5) currentballstate = POSSESSION;
+
+        if(usval < USTHRASH && balldir == 5) currentballstate = POSSESSION;
         else
         {
-            if(balldist > FARCLOSE)
-            {
-                currentballstate = CLOSE;
-                tclose = CurrentTick();
-            }
-            else
-            {
-                currentballstate = FAR;
-                tfar = CurrentTick();
-            }
+            //if((usval > 9 && usval < 23) || (usval > 33 && usval != 255))
+            //{
+                if(balldist > FARCLOSE && balldir < -1 && balldir > 1)
+                {
+                    currentballstate = CLOSE;
+                    tclose = CurrentTick();
+                }
+                if(balldist > FRONTFARCLOSE && balldir > -1 && balldir < 1)
+                {
+                    currentballstate = CLOSE;
+                    tclose = CurrentTick();
+                }
+                else
+                {
+                    currentballstate = FAR;
+                    tfar = CurrentTick();
+                }
+            //}
         }
         /*
         if(balldir == 5 && balldist > POSSESSTHRES) ballstate = POSSESSION;
