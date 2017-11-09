@@ -4,16 +4,24 @@
 //Program options
 #define AUTOCENTER
 
-//#define ENABLESWITCHES
+#define ENABLESWITCHES
 
 //#define MOTORTEST
-    #define TESTDIRECTIONAL
-    #define DriveFunction RotationalDrive
+    //#define TESTDIRECTIONAL
 
+/*
 //Handydandy sign function
 template <typename type> type sign(type value)
 { 
  return type((value > 0) - ( value < 0)); 
+}
+*/
+
+char sign(int i)
+{
+  if(i > 0) return 1;
+  if(i < 0) return -1;
+  else return 0;
 }
 
 //Libs
@@ -21,8 +29,8 @@ template <typename type> type sign(type value)
 #include "Driving.h"
 
 //Switchpins
-#define SENSORLOGWITCHPIN 0
-#define MOTORSWITCHPIN 2
+#define SENSORLOGWITCHPIN 2
+#define MOTORSWITCHPIN 3
 
 //Behaviour
 #define DEFLECTTHRES 1000
@@ -46,7 +54,7 @@ byte sidesign;
 
 void Guard()
 {
-        char correctionspeed = map(constrain(-orient, -90, 90), -90, 90, -70, 70); //Wow lots of complicatings
+        char correctionspeed = constrain(-orient, -25, 25);//Wow lots of complicatings
         if(usbval < MINBACKDIST)
         {
             RotationalDrive(0, 100, correctionspeed);
@@ -73,7 +81,7 @@ void Guard()
                 else // if(usbval <= OPTIMALBACKDIST)
                 {
                     StopAllMotors();
-                    currentbehaviour = TRACK;
+                    //currentbehaviour = TRACK;
                     sidesign = sign(balldir);
                 }
             }
@@ -84,6 +92,55 @@ void Guard()
                         case 1:
                             if(usbval > OPTIMALBACKDIST) RotationalDrive(100 * sign(balldir), 0, correctionspeed);
                             else RotationalDrive(100 * sign(balldir), 20, correctionspeed);
+                            break;
+                        case 2:
+                            RotationalDrive(100 * sign(balldir), 0, correctionspeed);
+                            break;
+                        case 3:
+                            RotationalDrive(0, -100, correctionspeed);
+                            break;
+                        case 4:
+                            RotationalDrive(-20 * sign(balldir), -100, correctionspeed);
+                            break;
+                    }
+            }
+        }
+}
+
+void Guard2()
+
+{
+        char correctionspeed = constrain(-orient, -15, 15);//Wow lots of complicatings
+        if(usbval < MINBACKDIST)
+        {
+            LinearDrive(0, 100, correctionspeed);
+        }
+        else if(usbval > MAXBACKDIST) RotationalDrive(0, 100, correctionspeed);
+        else if(ballstate == LOST)
+        {
+            if(usbval > MAXBACKDIST) RotationalDrive(0, -100, correctionspeed);
+            else StopAllMotors();
+        }
+        else if(balldir == 0)
+        {
+           RotationalDrive(0, 100, correctionspeed);
+        }
+        else //if(balldir != 0)
+        {
+            if(abs(xpos) > MAXCENTEROFFSET && sign(balldir) == sign(xpos)) //Wil verder dan zijkant goal
+            {
+                
+                {
+                    RotationalDrive(0, -100, correctionspeed);
+                }
+            }
+            else //if((abs(xpos) <= MAXCENTEROFFSET)
+            {
+                    switch(abs(balldir))
+                    {
+                        case 1:
+                             RotationalDrive(100 * sign(balldir), 0, correctionspeed);
+                            
                             break;
                         case 2:
                             RotationalDrive(100 * sign(balldir), 0, correctionspeed);
@@ -134,7 +191,6 @@ void ReturnToBeginPos()
         if(abs(ypos) < 10 && abs(xpos) < 10) currentbehaviour = GUARD;
         ProportionalDrive(constrain(-xpos * 3, -100, 100), constrain(-ypos * 2, -100, 100), map(constrain(-orient, -90, 90), -90, 90, -70, 70), 100);
     }
-    
 }
 
 void Deflect()
@@ -156,6 +212,9 @@ void setup()
 {
     Cereal.begin(9600);
     SetupSensors();
+    Cereal.println("Sensors Set up.");
+    Cereal.flush();
+    delay(500);
     SetupMotors();
     pinMode(SENSORLOGWITCHPIN, INPUT);
     pinMode(MOTORSWITCHPIN, INPUT);
@@ -189,28 +248,11 @@ void loop()
 
 void loop()
 {
-    if(digitalRead(SENSORLOGWITCHPIN)) if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
-    if(digitalRead(MOTORSWITCHPIN))
-    {
-        StopAllMotors();
-    }
+    if(digitalRead(SENSORLOGWITCHPIN)) TransmitSensorValues();//Embedded lower level programming... Yay!
+    if(!digitalRead(MOTORSWITCHPIN)) StopAllMotors();
     else
     {
-        if(millis() - t0 < 1000) DriveFunction(0, 0, 100);
-        else if(millis() - t0 < 2000) DriveFunction(0, 0, -100);
-        else if(millis() - t0 < 3000) DriveFunction(0, 100, 0);
-        else if(millis() - t0 < 4000) DriveFunction(0, -100, 0);
-        else if(millis() - t0 < 5000) DriveFunction(100, 0, 0);
-        else if(millis() - t0 < 6000) DriveFunction(100, 0, 0);
-        else if(millis() - t0 < 7000) DriveFunction(100, 100, 0);
-        else if(millis() - t0 < 8000) DriveFunction(-100, -100, 0);
-        else if(millis() - t0 < 9000) DriveFunction(-100, 0, 50);
-        else
-        {
-            StopAllMotors();
-            delay(500);
-            t0 = millis();
-        }
+        LinearDrive(100, 0, 0);
     }
 }
 
@@ -220,12 +262,10 @@ void loop()
 void loop()
 {
     UpdateSensorValues();
-    #ifdef ENABLESWITCHES
     if(digitalRead(SENSORLOGWITCHPIN))
-    #endif
-        if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
-    #ifdef ENABLESWITCHES
-    if(digitalRead(MOTORSWITCHPIN))
+        //if((UCSR0A & _BV(TXC0))) TransmitSensorValues();//Embedded lower level programming... Yay!
+        TransmitSensorValues();
+    if(!digitalRead(MOTORSWITCHPIN))
     {
         StopAllMotors();
     }
@@ -245,25 +285,11 @@ void loop()
             case DEFLECT:
                 Deflect();
                 break;
-        }
-    }
-    #else
-            switch(currentbehaviour)
-        {
-            case GUARD:
+            default:
                 Guard();
                 break;
-            case TRACK:
-                Track();
-                break;
-            case RETURN:
-                ReturnToBeginPos();
-                break;
-            case DEFLECT:
-                Deflect();
-                break;
         }
-    #endif
+    }
 }
 
 #endif

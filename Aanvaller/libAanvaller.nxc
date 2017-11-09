@@ -40,7 +40,7 @@ byte usval;
 int orient;
 int balldist, lastballdist = 0;
 char balldir, lastballdir = 1;
-byte ballstate;
+byte currentballstate;
 unsigned long tlastseen, losttime, tlastinfront, infronttime;
 
 //Light Calib
@@ -49,9 +49,12 @@ unsigned long tlastseen, losttime, tlastinfront, infronttime;
 #define WHITEGREEN 15 //Calib
 
 //IRBall
-#define POSSESSTHRES 240 //Calib
+#define POSSESSTHRES 240 //USsensor //Calib
 #define LOSSTHRES 200 //Calib
-#define FARCLOSE 150 //Calib
+#define FARCLOSE 50 //Calib
+
+//USsensor
+#define USTHRASH 7
 
 enum ballstate
 {
@@ -60,6 +63,8 @@ enum ballstate
     CLOSE,
     POSSESSION
 };
+
+unsigned long tfar, tclose;
 
 void HTEnhancedIRSeekerV2(const byte port, int &dir = balldir, int &strength = balldist)
 {
@@ -304,22 +309,37 @@ void UpdateSensorValues()
     if(balldist == 0)
     {
         losttime = CurrentTick() - tlastseen;
-        if(losttime > 500) ballstate = LOST; //Calib
+        if(losttime > 200) currentballstate = LOST; //Calib
         balldir = lastballdir;
         balldist = lastballdist;
     }
     else
     {
         tlastseen = CurrentTick();
-        losttime = 0;
         lastballdir = balldir;
         lastballdist = balldist;
+        if(usval <= USTHRASH && balldir == 5) currentballstate = POSSESSION;
+        else
+        {
+            if(balldist > FARCLOSE)
+            {
+                currentballstate = CLOSE;
+                tclose = CurrentTick();
+            }
+            else
+            {
+                currentballstate = FAR;
+                tfar = CurrentTick();
+            }
+        }
+        /*
         if(balldir == 5 && balldist > POSSESSTHRES) ballstate = POSSESSION;
         else if((balldist > LOSSTHRES && ballstate != POSSESSION) || balldist <= LOSSTHRES)
         {
             if(balldist > FARCLOSE) ballstate = CLOSE;
             else ballstate = FAR;
         }
+        */
     }
     balldir -= 5;
     balldir = -balldir; //Optional flip so that rightward values are positive
@@ -340,7 +360,7 @@ void UpdateSensorValues()
     NumOut(50,  LCD_LINE4, lightval, DRAW_OPT_CLEAR_EOL);
     NumOut(50,  LCD_LINE5, usval, DRAW_OPT_CLEAR_EOL);
     
-    switch(ballstate)
+    switch(currentballstate)
     {
         case POSSESSION:
             TextOut(0, LCD_LINE7, "POSSESSION", DRAW_OPT_CLEAR_EOL);
