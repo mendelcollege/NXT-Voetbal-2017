@@ -1,5 +1,33 @@
 #include "libAanvaller.nxc"
 
+//#define FUNCTIONTEST
+
+/*
+void MordorControl()
+{
+    switch(currentdrivestate.type)          //Be careful, may be new
+    {
+        case PROPORTIONAL:
+            ProportionalDrive(-currentdrivestate.x, -currentdrivestate.y, 0, 100);
+            break;
+        case LINEAR:
+            LinearDrive(-currentdrivestate.x, -currentdrivestate.y, 0);
+            break;
+        case ROTATIONAL:
+            RotationalDrive(-currentdrivestate.x, -currentdrivestate.y, 0);
+            break;
+        case DIRECTIONAL:
+            ProportionalDrive(-currentdrivestate.x, -currentdrivestate.y, 0, 100);
+            break;
+        case COMPASS:
+            CompassDrive(currentdrivestate.dir + 180, currentdrivestate.dirvel, 0, 100);
+            break;
+    }
+    Wait(2000);
+}
+*/
+
+
 void MordorControl()
 {
     static drivestate lastdrivestate;
@@ -47,81 +75,84 @@ void Search()
 void Follow()
 {
     if(balldir == 0) LinearDrive(0, 100, 0);
-    switch(abs(balldir))
+    else if(currentballstate == FAR)
     {
-        case 1:
-            LinearDrive(0, 100, -10 * sign(balldir));  //Calib
-            break;
-        case 2:
-            LinearDrive(100 * sign(balldir), 0, 40 * sign(balldir));  //Calib
-            //DirectionalDrive(45 * sign(dir), 100, 20 * sign(dir)); //In geval van goede sensor //Calib
-            break;
-        case 3:
-            DirectionalDrive(0, 0, -100 * sign(balldir));  //Calib (goed rondje)
-            
-            break;
-        case 4:
-            DirectionalDrive(0, 0, -100 * sign(balldir));  //Calib (goed rondje)
-            break;
+        switch(abs(balldir))
+        {
+            case 1:
+                LinearDrive(0, 100, 10 * sign(balldir));  //Calib
+                break;
+            case 2:
+                LinearDrive(100 * sign(balldir), 0, 40 * sign(balldir));  //Calib
+                //DirectionalDrive(45 * sign(dir), 100, 20 * sign(dir)); //In geval van goede sensor //Calib
+                break;
+            case 3:
+                DirectionalDrive(0, 0, 100 * sign(balldir));  //Calib (goed rondje)
+
+                break;
+            case 4:
+                DirectionalDrive(0, 0, 100 * sign(balldir));  //Calib (goed rondje)
+                break;
+        }
+    }
+    else
+    {
+        if(balldir == 0) LinearDrive(0, 50, 0);
+        switch(abs(balldir))
+        {
+            case 1:
+                LinearDrive(10 * sign(balldir), 75, 20 * sign(balldir));  //Calib
+                break;
+            case 2:
+                LinearDrive(75 * sign(balldir), 0, 40 * sign(balldir));  //Calib
+                //DirectionalDrive(45 * sign(dir), 100, 20 * sign(dir)); //In geval van goede sensor //Calib
+                break;
+            case 3:
+                DirectionalDrive(0, 0, 50 * sign(balldir), 100);  //Calib (goed rondje)
+
+                break;
+            case 4:
+                DirectionalDrive(0, 0, 50 * sign(balldir), 100);  //Calib (goed rondje)
+                break;
+        }
     }
 }
 
 void Align()
 {
-    switch(balldir)
+
+    int corrspeed = -orient / 2;
+    if(corrspeed > 30) corrspeed = 30;
+    if(corrspeed < -30) corrspeed = -30;
+    switch(abs(balldir))
     {
-        case 1:
-            if(orient < -20) DirectionalDrive(-135, 100,  30, 100);
-            if(orient >  20) DirectionalDrive(-135, 100, -30, 100);
-            else             CompassDrive(135, 100, 0, 100);
-            break;
-        case 2:
-            if(orient < -20) DirectionalDrive(-135, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(-135, 100, -30, 100);
-            else CompassDrive(135, 100, 0, 100);
+        case 4:
+            DirectionalDrive(-90 * sign(balldir),  75, corrspeed, 100);
             break;
         case 3:
-            if(orient < -20) DirectionalDrive(135, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(135, 100, -30, 100);
-            else CompassDrive(180, 100, 0, 100);
+            DirectionalDrive(-150 * sign(balldir), 100, corrspeed, 100);
             break;
-        case 4:
-            if(orient < -20) DirectionalDrive(45, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(45, 100, -30, 100);
-            else CompassDrive(90, 100, 0, 100);
+        case 2:
+            DirectionalDrive(150 * sign(balldir), 75, corrspeed, 100);
             break;
-        case 5:
-            if(orient < -20) DirectionalDrive(0, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(0, 100, -30, 100);
-            else CompassDrive(0, 100, 0, 100);
+        case 1:
+            DirectionalDrive(75 * sign(balldir), 100, corrspeed, 100);
             break;
-        case 6:
-            if(orient < -20) DirectionalDrive(-45, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(-45, 100, -30, 100);
-            else CompassDrive(-45, 100, 0, 100);
+        case 0:
+            DirectionalDrive(0, 100, corrspeed, 100);
             break;
-        case 7:
-            if(orient < -20) DirectionalDrive(-135, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(-135, 100, -30, 100);
-            else CompassDrive(-135, 100, 30, 100);
-            break;
-        case 8:
-            if(orient < -20) DirectionalDrive(135, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(135, 100, -30, 100);
-            else CompassDrive(135, 100, 0, 100);
-            break;
-        case 9:
-            if(orient < -20) DirectionalDrive(135, 100, 30, 100);
-            if(orient >  20) DirectionalDrive(135, 100, -30, 100);
-            else CompassDrive(135, 100, 0, 100);
     }
+
 }
 
 void Target()       //Vrot = Vx/r (Vrot is rotating speed, Vx is snelheid x-richting, r is de straal van de cirkel die de robot maakt)
 {
+    Off(OUT_ABC);
+    LinearDrive(0,-100,0);
+    Wait(50);
     int r;
     int Vrot;
-    if(abs(orient) < 20)
+    if(abs(orient) < 13)
     {
         if(orient < 0) LinearDrive(0, 100, -10);
         if(orient > 0) LinearDrive(0, 100,  10);
@@ -133,27 +164,64 @@ void Target()       //Vrot = Vx/r (Vrot is rotating speed, Vx is snelheid x-rich
         
         Vrot = 50;           //Calib
         r = 11.6;           //Calib
-        ProportionalDrive(Vrot/r  * sign(balldir), 0, Vrot * sign(balldir), 100);
+        ProportionalDrive(80 * sign(orient), 30, -40 * sign(orient), 100);
     }
 }
 
-//#define CHECKLINE
+void DistCheck()
+{
+    switch(balldir)
+    {
+        case -4:
+            RotationalDrive(0, 0, -100);   //Calib
+            break;
+        case -3:
+            RotationalDrive(0, 0, -80);
+            break;
+        case -2:
+            RotationalDrive(0, 0, -60);
+            break;
+        case -1:
+            RotationalDrive(0, 0, -30);
+            break;
+        case 0:
+            currentballstate = FAR;
+            break;
+        case 1:
+            RotationalDrive(0, 0, 30);
+            break;
+        case 2:
+            RotationalDrive(0, 0, 60);
+            break;
+        case 3:
+            RotationalDrive(0, 0, 80);
+            break;
+        case 4:
+            RotationalDrive(0, 0, 100);
+            break;
+    }
+}
+#define CHECKLINE
+
+#ifndef FUNCTIONTEST
 
 task main()
 {
     Init();
+    LinearDrive(0,100,0);
+    Wait(500);
     while(true)
     {
         UpdateSensorValues();
         #ifdef CHECKLINE
-        if(lightval > WHITEGREEN)
+        if(lightval > GREENWHITE)
         {
             TextOut(0, LCD_LINE7, "MordorControl");
             MordorControl();
         }
         else
         #endif
-        switch(ballstate)
+        switch(currentballstate)
         {
             case POSSESSION:
                 TextOut(0, LCD_LINE8, "Target");
@@ -164,8 +232,16 @@ task main()
                 Align();
                 break;
             case FAR:
-                TextOut(0, LCD_LINE8, "Follow");
-                Follow();
+                if(tclose - tfar < 1000)
+                {
+                    TextOut(0, LCD_LINE8, "DistCheck");
+                    DistCheck();
+                }
+                else
+                {
+                    TextOut(0, LCD_LINE8, "Follow");
+                    Follow();
+                }
                 break;
             case LOST:
                 TextOut(0, LCD_LINE8, "Search");
@@ -174,3 +250,75 @@ task main()
         }
     }
 }
+
+#else
+
+task main()
+{
+    char interface = 0, running = false;
+    Init();
+    while(true)
+    {
+        if(!running)
+        {
+            interface = interface + ButtonCount(BTNRIGHT, true) - ButtonCount(BTNLEFT, true);
+            NumOut(0, LCD_LINE1, interface, DRAW_OPT_CLEAR_EOL);
+            switch(interface)
+            {
+                case -1:
+                    interface = 3;
+                    break;
+                case 0:
+                    TextOut(6, LCD_LINE1, ": BorderControl");
+                    break;
+                case 1:
+                    TextOut(6, LCD_LINE1, ": Target");
+                    break;
+                case 2:
+                    TextOut(6, LCD_LINE1, ": Align");
+                    break;
+                case 3:
+                    TextOut(6, LCD_LINE1, ": Search");
+                    break;
+                case 4:
+                    TextOut(6, LCD_LINE1, ": Follow");
+                    break;
+                case 5:
+                    interface = 0;
+                    break;
+            }
+        }
+        if(running)
+        {
+            UpdateSensorValues();
+            switch(interface)
+            {
+                case 0:
+                    DirectionalDrive(45, 100, 0, 100);
+                    if(lightval > WHITEGREEN) MordorControl();
+                    break;
+                case 1:
+                    if(currentballstate == POSSESSION) Target();
+                    else Off(OUT_ABC);
+                    break;
+                case 2:
+                    Align();
+                    break;
+                case 3:
+                    Search();
+                    break;
+                case 4:
+                    Follow();
+                    break;
+            }
+        }
+        if(ButtonCount(BTNCENTER, true))
+        {
+            Off(OUT_ABC);
+            ClearScreen();
+            running = !running;
+        }
+    }
+}
+
+#endif

@@ -4,10 +4,10 @@
 //Program options
 #define AUTOCENTER
 
-//#define ENABLESWITCHES
+#define ENABLESWITCHES
 
-//#define MOTORTEST
-    #define TESTDIRECTIONAL
+#define MOTORTEST
+    //#define TESTDIRECTIONAL
     #define DriveFunction RotationalDrive
 
 //Handydandy sign function
@@ -21,8 +21,8 @@ template <typename type> type sign(type value)
 #include "Driving.h"
 
 //Switchpins
-#define SENSORLOGWITCHPIN 0
-#define MOTORSWITCHPIN 2
+#define SENSORLOGWITCHPIN 2
+#define MOTORSWITCHPIN 3
 
 //Behaviour
 #define DEFLECTTHRES 1000
@@ -134,7 +134,6 @@ void ReturnToBeginPos()
         if(abs(ypos) < 10 && abs(xpos) < 10) currentbehaviour = GUARD;
         ProportionalDrive(constrain(-xpos * 3, -100, 100), constrain(-ypos * 2, -100, 100), map(constrain(-orient, -90, 90), -90, 90, -70, 70), 100);
     }
-    
 }
 
 void Deflect()
@@ -225,12 +224,13 @@ void loop()
     #endif
         if(UCSR0A & _BV(TXC0)) TransmitSensorValues();//Embedded lower level programming... Yay!
     #ifdef ENABLESWITCHES
-    if(digitalRead(MOTORSWITCHPIN))
+    if(!digitalRead(MOTORSWITCHPIN))
     {
         StopAllMotors();
     }
     else
     {
+    #endif
         switch(currentbehaviour)
         {
             case GUARD:
@@ -246,23 +246,8 @@ void loop()
                 Deflect();
                 break;
         }
+    #ifdef ENABLESWITCHES
     }
-    #else
-            switch(currentbehaviour)
-        {
-            case GUARD:
-                Guard();
-                break;
-            case TRACK:
-                Track();
-                break;
-            case RETURN:
-                ReturnToBeginPos();
-                break;
-            case DEFLECT:
-                Deflect();
-                break;
-        }
     #endif
 }
 

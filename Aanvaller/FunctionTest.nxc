@@ -42,10 +42,10 @@ task main()
             {
                 case 0:
                     DirectionalDrive(45, 100, 0, 100);
-                    if(lightval > WHITE) BorderControl();
+                    if(lightval > WHITEGREEN) MordorControl();
                     break;
                 case 1:
-                    if(possession) Target();
+                    if(currentballstate == POSSESSION) Target();
                     else Off(MOTOR_ALL);
                     break;
                 case 2:
