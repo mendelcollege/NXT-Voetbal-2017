@@ -1,5 +1,6 @@
 #include "libAanvaller.nxc"
 
+//Simple version of MorderControl()
 /*
 void MordorControl()
 {
@@ -25,21 +26,34 @@ void MordorControl()
 }
 */
 
+/* MordorControl():
+ * Makes sure robot stays in line.
+ * It remembers recent linecrossings, so that if it gets pushed over the line,
+ * get stuck there due to it's own linecross prevention
+ */
 void MordorControl()
 {
-    static drivestate lastdrivestate;
-    static unsigned long tlastdrivestate;
-    if(tlastdrivestate == 0)
+    static drivestate lastdrivestate; //Static inside function means value will be kept
+    static unsigned long tlastdrivestate = 0;
+    if(tlastdrivestate == 0) //If there is no stored drivestate
     {
+        //Store current drivestate + timestamp
         lastdrivestate = currentdrivestate; //I think this works.. Thx NXC for auto struct assignment!
         tlastdrivestate = CurrentTick();
     }
-    else if(CurrentTick() - tlastdrivestate < 2000)     //Calib
+    else if(CurrentTick() - tlastdrivestate < 2000) //If the stored drivestate is recent, same line is crossed again (Calib)
     {
+        tlastdrivestate = CurrentTick(); //Update timestamp
+    }
+    else //Normal situation, old invalid state is stored
+    {
+        //Store current drivestate + timestamp
+        lastdrivestate = currentdrivestate; //I think this works.. Thx NXC for auto struct assignment!
         tlastdrivestate = CurrentTick();
     }
-    else tlastdrivestate = 0;
-    switch(lastdrivestate)          //Be careful, may be new
+    
+    //Drive the opposite way
+    switch(lastdrivestate) //In normal cases this equals switch(currentdrivestate)
     {
         case PROPORTIONAL:
             ProportionalDrive(-currentdrivestate.x, -currentdrivestate.y, 0, 100);
@@ -57,20 +71,28 @@ void MordorControl()
             CompassDrive(currentdrivestate.dir + 180, currentdrivestate.dirvel, 0, 100);
             break;
     }
-    //Wait(300);  //Calib
+    //Wait till robot passed line + buffer (get the joke plz)
     while(lightval < WHITEGREEN) UpdateSensorValues();
     while(lightval > WHITEGREEN) UpdateSensorValues();
     Wait(100);   //(H2PO4)-/(HPO4)2- //Calib
 }
 
+/* Search():
+ * Try to locate the ball.
+ * Idea for improvement: go backwards while turning around, using CompassDrive
+ */
 void Search()
 {
     RotationalDrive(0, 0, 40 * sign(balldir)); //Calib
 }
 
+/* Follow():
+ * Follow the ball (turn and go to the ball)
+ *
+ */
 void Follow()
 {
-    if(balldir == 0) LinearDrive(0, 100, 0);
+    if(balldir == 0) LinearDrive(0, 100, 0); //If ball is in front go forward
     else if(currentballstate == FAR)
     {
         switch(abs(balldir))
@@ -114,6 +136,9 @@ void Follow()
     }
 }
 
+/* Align():
+ * Get behind the ball, while turning forward (towards the goal)
+ */
 void Align()
 {
     int corrspeed = -orient / 2;
@@ -140,71 +165,57 @@ void Align()
 
 }
 
+/* Target():
+ * (used when in possession);
+ */
 void Target()       //Vrot = Vx/r (Vrot is rotating speed, Vx is snelheid x-richting, r is de straal van de cirkel die de robot maakt)
 {
-    Off(OUT_ABC);
-    LinearDrive(0,-100,0);
-    Wait(50);
-    int r;
-    int Vrot;
-    if(abs(orient) < 13)
+    int r = 11.6;
+    int Vrot = 50;
+    if(abs(orient) < 13) // If robot almost pointed forward (towards goal)
     {
+        //Drive forward a bit (but also turning a bit more to the goal) and kick
         if(orient < 0) LinearDrive(0, 100, -10);
         if(orient > 0) LinearDrive(0, 100,  10);
-        Wait(50); //Calib
-        if(CurrentTick() - tlastkick >= RECHARGINGTIME) Kick();
+        Wait(500); //Calib
+        if(CurrentTick() - tlastkick >= RECHARGINGTIME) Kick(); //Checks if kicker is charged
     }
-    else
+    else //Turn to goal by circling around the ball, so no possession is lost
     {
-        
-        Vrot = 50;           //Calib
-        r = 11.6;           //Calib
         ProportionalDrive(80 * sign(orient), 30, -40 * sign(orient), 100);
     }
 }
 
 void DistCheck()
 {
-    switch(balldir)
+    switch(abs(balldir))
     {
-        case -4:
-            RotationalDrive(0, 0, -100);   //Calib
-            break;
-        case -3:
-            RotationalDrive(0, 0, -80);
-            break;
-        case -2:
-            RotationalDrive(0, 0, -60);
-            break;
-        case -1:
-            RotationalDrive(0, 0, -30);
-            break;
         case 0:
             Follow();
             break;
         case 1:
-            RotationalDrive(0, 0, 30);
+            RotationalDrive(0, 0, 30 * sign(balldir));
             break;
         case 2:
-            RotationalDrive(0, 0, 60);
+            RotationalDrive(0, 0, 60 * sign(balldir));
             break;
         case 3:
-            RotationalDrive(0, 0, 80);
+            RotationalDrive(0, 0, 80 * sign(balldir));
             break;
         case 4:
-            RotationalDrive(0, 0, 100);
+            RotationalDrive(0, 0, 100 * sign(balldir));
             break;
     }
 }
 
-#define CHECKLINE
-#ifndef FUNCTIONTEST
+#define CHECKLINE //Comment this out if you don't want it spacing out while testing on random surfaces
+#ifndef FUNCTIONTEST //Preprocessor wizardry so all function in file, except main can be included in functiontest
 
 task main()
 {
     LinearDrive(0,100,0);
     Init();
-    Wait(500);
+    Wait(200);
     while(true)
     {
         UpdateSensorValues();

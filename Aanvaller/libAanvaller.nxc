@@ -517,7 +517,9 @@ void Init()
     SetSensorType(LIGHTSENSORPORT, SENSOR_TYPE_LIGHT);
     SetSensorMode(LIGHTSENSORPORT, SENSOR_MODE_PERCENT);
     MMX_Init(MMXPORT, 0x06, MMX_Profile_NXT_Motors); //Calls SetSensorLowspeed
-    compassbeginval = SensorHTCompass(COMPASSPORT); //Store starting orientation
+    //Store starting orientation, which should equal robot pointing straight forward
+    //Lots of other things use this
+    compassbeginval = SensorHTCompass(COMPASSPORT);
     #ifdef DISPLAYSENSORVALS
     DrawSensorLabels();
     #endif
