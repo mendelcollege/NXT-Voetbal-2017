@@ -186,6 +186,12 @@ void Target()       //Vrot = Vx/r (Vrot is rotating speed, Vx is snelheid x-rich
     }
 }
 
+/* DistCheck():
+ * Unused function made by soldeertim
+ * Think it was used to quickly find the ball, in the first seconds after the ball
+ * went from close to far. You can implement this using tclose, and tfar.
+ * Name makes no sense.
+ */
 void DistCheck()
 {
     switch(abs(balldir))
@@ -227,25 +233,25 @@ task main()
         }
         else
         #endif
-        switch(currentballstate)
-        {
-            case POSSESSION:
-                TextOut(0, LCD_LINE8, "Target");
-                Target();
-                break;
-            case CLOSE:
-                TextOut(0, LCD_LINE8, "Align");
-                Align();
-                break;
-            case FAR:
-                TextOut(0, LCD_LINE8, "Follow");
-                Follow();
-                break;
-            case LOST:
-                TextOut(0, LCD_LINE8, "Search");
-                Search();
-                break;
-        }
+            switch(currentballstate)
+            {
+                case POSSESSION:
+                    TextOut(0, LCD_LINE8, "Target");
+                    Target();
+                    break;
+                case CLOSE:
+                    TextOut(0, LCD_LINE8, "Align");
+                    Align();
+                    break;
+                case FAR:
+                    TextOut(0, LCD_LINE8, "Follow");
+                    Follow();
+                    break;
+                case LOST:
+                    TextOut(0, LCD_LINE8, "Search");
+                    Search();
+                    break;
+            }
     }
 }
 
